@@ -42,9 +42,30 @@ def test_service_rejects_invalid_records(tmp_path: Path) -> None:
         EnrollmentService(data_file)
 
 
+def test_service_rejects_malformed_json(tmp_path: Path) -> None:
+    data_file = tmp_path / "bad.json"
+    data_file.write_text("{bad json", encoding="utf-8")
+
+    with pytest.raises(EnrollmentDataError, match="malformed JSON"):
+        EnrollmentService(data_file)
+
+
+def test_service_rejects_non_object_data(tmp_path: Path) -> None:
+    data_file = tmp_path / "bad.json"
+    data_file.write_text("[1, 2, 3]", encoding="utf-8")
+
+    with pytest.raises(EnrollmentDataError, match="non-empty object"):
+        EnrollmentService(data_file)
+
+
 def test_find_year_returns_last_four_digit_year() -> None:
     assert find_year("compare 2024 and 2026 enrollment") == 2026
 
 
 def test_find_year_returns_none_for_malformed_question() -> None:
     assert find_year("how many students enrolled?") is None
+
+
+def test_find_year_rejects_non_string_question() -> None:
+    with pytest.raises(TypeError, match="question must be a string"):
+        find_year(2025)  # type: ignore[arg-type]

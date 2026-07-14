@@ -81,3 +81,16 @@ def test_malformed_post_body_returns_422() -> None:
     response = client().post("/students/enrollment", json={"year": 2028})
 
     assert response.status_code == 422
+
+
+def test_invalid_student_count_returns_422() -> None:
+    response = client().post("/students/enrollment", json={"year": 2028, "students": -1})
+
+    assert response.status_code == 422
+
+
+def test_update_missing_year_returns_404() -> None:
+    response = client().put("/students/enrollment/2030", json={"students": 2000})
+
+    assert response.status_code == 404
+    assert response.json() == {"detail": "Year not found"}
