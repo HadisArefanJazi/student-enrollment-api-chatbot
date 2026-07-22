@@ -1,4 +1,4 @@
-# Student Enrollment API Chatbot
+# Student Enrollment REST API and Terminal Chatbot
 
 This project is a small FastAPI application for querying student enrollment counts by year. It also includes a terminal chatbot example that extracts a year from a natural-language question and asks the running API for the corresponding enrollment record.
 
