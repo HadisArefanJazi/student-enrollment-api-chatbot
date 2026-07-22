@@ -173,17 +173,3 @@ Then test:
 ```bash
 curl "http://127.0.0.1:8000/students/enrollment?year=2025"
 ```
-
-## Limitations
-
-- Enrollment data is stored in a local JSON file loaded at startup.
-- Create, update, and delete operations mutate in-memory data only.
-- The chatbot extracts only four-digit years.
-- There is no authentication, database server, frontend, or LLM integration.
-
-## Future Improvements
-
-- Persist changes back to a controlled storage layer.
-- Add more robust natural-language parsing for year-related questions.
-- Add configuration for alternate data files.
-- Expand tests for concurrent update scenarios if persistence is introduced.
