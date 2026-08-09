@@ -6,7 +6,7 @@ import re
 
 
 def find_year(question: str) -> int | None:
-    """Return the last four-digit year in a question, matching original behavior."""
+    """Return the last four-digit year in a question."""
 
     if not isinstance(question, str):
         raise TypeError("question must be a string.")
