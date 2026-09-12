@@ -1,22 +1,24 @@
+import pytest
 from fastapi.testclient import TestClient
 
 from app.main import create_app
+from app.repositories.enrollment import EnrollmentDataError
 
 
-def client() -> TestClient:
-    return TestClient(create_app())
+@pytest.fixture
+def client():
+    with TestClient(create_app()) as api:
+        yield api
 
 
-def test_root_endpoint() -> None:
-    response = client().get("/")
-
+def test_health(client):
+    response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"message": "API is running"}
 
 
-def test_get_all_students_schema() -> None:
-    response = client().get("/students")
-
+def test_list_enrollments(client):
+    response = client.get("/enrollments")
     assert response.status_code == 200
     assert response.json() == [
         {"year": 2024, "students": 1700},
@@ -25,72 +27,59 @@ def test_get_all_students_schema() -> None:
     ]
 
 
-def test_get_enrollment_valid_year() -> None:
-    response = client().get("/students/enrollment", params={"year": 2026})
-
+def test_get_enrollment(client):
+    response = client.get("/enrollments/2025")
     assert response.status_code == 200
-    assert response.json() == {"year": 2026, "students": 1800}
+    assert response.json() == {"year": 2025, "students": 1650}
 
 
-def test_get_enrollment_missing_year_parameter() -> None:
-    response = client().get("/students/enrollment")
-
-    assert response.status_code == 422
-
-
-def test_get_enrollment_unavailable_year() -> None:
-    response = client().get("/students/enrollment", params={"year": 2030})
-
+def test_unavailable_year(client):
+    response = client.get("/enrollments/2030")
     assert response.status_code == 404
     assert response.json() == {"detail": "No data for this year"}
 
 
-def test_create_update_and_delete_enrollment() -> None:
-    api = client()
-
-    create_response = api.post("/students/enrollment", json={"year": 2027, "students": 1900})
-    assert create_response.status_code == 201
-    assert create_response.json() == {
-        "message": "Enrollment record added",
-        "year": 2027,
-        "students": 1900,
-    }
-
-    duplicate_response = api.post("/students/enrollment", json={"year": 2027, "students": 1901})
-    assert duplicate_response.status_code == 409
-    assert duplicate_response.json() == {"detail": "Year already exists"}
-
-    update_response = api.put("/students/enrollment/2027", json={"students": 1950})
-    assert update_response.status_code == 200
-    assert update_response.json() == {
-        "message": "Enrollment record updated",
-        "year": 2027,
-        "students": 1950,
-    }
-
-    delete_response = api.delete("/students/enrollment/2027")
-    assert delete_response.status_code == 200
-    assert delete_response.json() == {
-        "message": "Enrollment record deleted",
-        "year": 2027,
-        "students": 1950,
-    }
+@pytest.mark.parametrize("year", ["abc", "2025.5", "1899", "3001"])
+def test_invalid_year(client, year):
+    assert client.get(f"/enrollments/{year}").status_code == 422
 
 
-def test_malformed_post_body_returns_422() -> None:
-    response = client().post("/students/enrollment", json={"year": 2028})
+@pytest.mark.parametrize(
+    "method,path",
+    [
+        ("post", "/enrollments"),
+        ("post", "/enrollments/2025"),
+        ("put", "/enrollments/2025"),
+        ("patch", "/enrollments/2025"),
+        ("delete", "/enrollments/2025"),
+    ],
+)
+def test_api_is_read_only(client, method, path):
+    before = client.get("/enrollments").json()
+    assert client.request(method, path, json={"students": 1}).status_code == 405
+    assert client.get("/enrollments").json() == before
 
-    assert response.status_code == 422
+
+@pytest.mark.parametrize("path", ["/", "/students", "/students/enrollment"])
+def test_old_routes_removed(client, path):
+    assert client.get(path).status_code == 404
 
 
-def test_invalid_student_count_returns_422() -> None:
-    response = client().post("/students/enrollment", json={"year": 2028, "students": -1})
+def test_openapi_only_exposes_read_endpoints(client):
+    paths = client.get("/openapi.json").json()["paths"]
+    assert set(paths) == {"/health", "/enrollments", "/enrollments/{year}"}
+    assert all(set(operations) == {"get"} for operations in paths.values())
 
-    assert response.status_code == 422
+
+def test_app_uses_custom_data(tmp_path):
+    path = tmp_path / "data.json"
+    path.write_text('{"2000": 0}')
+    with TestClient(create_app(path)) as client:
+        assert client.get("/enrollments/2000").json() == {"year": 2000, "students": 0}
 
 
-def test_update_missing_year_returns_404() -> None:
-    response = client().put("/students/enrollment/2030", json={"students": 2000})
-
-    assert response.status_code == 404
-    assert response.json() == {"detail": "Year not found"}
+def test_invalid_data_prevents_app_creation(tmp_path):
+    path = tmp_path / "data.json"
+    path.write_text('{"2025": true}')
+    with pytest.raises(EnrollmentDataError):
+        create_app(path)

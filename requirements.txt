@@ -1,5 +1,0 @@
-fastapi>=0.110
-uvicorn[standard]>=0.27
-requests>=2.31
-pytest>=7.0,<8.0
-httpx>=0.24

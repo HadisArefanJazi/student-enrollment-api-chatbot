@@ -1,80 +1,38 @@
-"""FastAPI route definitions for student enrollment records."""
+"""Read-only HTTP endpoints for annual enrollment counts."""
 
-from __future__ import annotations
+from typing import Annotated
 
-from fastapi import APIRouter, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-from app.schemas.enrollment import (
-    EnrollmentMutationResponse,
-    EnrollmentRecord,
-    EnrollmentResponse,
-    EnrollmentUpdate,
-    HealthResponse,
-)
-from app.services.enrollment_service import EnrollmentService
+from app.repositories.enrollment import EnrollmentRepository
+from app.schemas.enrollment import EnrollmentRecord, HealthResponse, Year
 
 router = APIRouter()
 
 
-def get_service(request: Request) -> EnrollmentService:
-    """Retrieve the application enrollment service."""
+def get_repository(request: Request) -> EnrollmentRepository:
+    """Use the validated snapshot owned by this application instance."""
+    return request.app.state.enrollment_repository
 
-    return request.app.state.enrollment_service
+
+Repository = Annotated[EnrollmentRepository, Depends(get_repository)]
 
 
-@router.get("/", response_model=HealthResponse)
-def home() -> dict[str, str]:
-    """Health check endpoint."""
-
+@router.get("/health", response_model=HealthResponse)
+def health() -> dict[str, str]:
     return {"message": "API is running"}
 
 
-@router.get("/students", response_model=list[EnrollmentResponse])
-def get_all_students(request: Request) -> list[dict[str, int]]:
-    """Return all enrollment records."""
+@router.get("/enrollments", response_model=list[EnrollmentRecord])
+def list_enrollments(repository: Repository) -> list[EnrollmentRecord]:
+    """Return annual records in ascending year order."""
+    return repository.list_records()
 
-    return get_service(request).list_records()
 
-
-@router.get("/students/enrollment", response_model=EnrollmentResponse)
-def get_enrollment(year: int, request: Request) -> dict[str, int]:
-    """Return enrollment for a requested year."""
-
+@router.get("/enrollments/{year}", response_model=EnrollmentRecord)
+def get_enrollment(year: Year, repository: Repository) -> EnrollmentRecord:
+    """Return one annual record; a valid but unavailable year returns 404."""
     try:
-        return get_service(request).get_enrollment(year)
+        return repository.get_enrollment(year)
     except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="No data for this year") from exc
-
-
-@router.post(
-    "/students/enrollment",
-    response_model=EnrollmentMutationResponse,
-    status_code=status.HTTP_201_CREATED,
-)
-def add_enrollment(record: EnrollmentRecord, request: Request) -> dict[str, int | str]:
-    """Add a new enrollment record."""
-
-    try:
-        return get_service(request).add_enrollment(record.year, record.students)
-    except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Year already exists") from exc
-
-
-@router.put("/students/enrollment/{year}", response_model=EnrollmentMutationResponse)
-def update_enrollment(year: int, record: EnrollmentUpdate, request: Request) -> dict[str, int | str]:
-    """Update an existing enrollment record."""
-
-    try:
-        return get_service(request).update_enrollment(year, record.students)
-    except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Year not found") from exc
-
-
-@router.delete("/students/enrollment/{year}", response_model=EnrollmentMutationResponse)
-def delete_enrollment(year: int, request: Request) -> dict[str, int | str]:
-    """Delete an existing enrollment record."""
-
-    try:
-        return get_service(request).delete_enrollment(year)
-    except KeyError as exc:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Year not found") from exc
+        raise HTTPException(status_code=404, detail="No data for this year") from exc

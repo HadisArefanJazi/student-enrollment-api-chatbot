@@ -1,56 +1,63 @@
-"""Terminal chatbot example that queries the running enrollment API."""
-
-from __future__ import annotations
+"""Terminal chatbot that requests one annual count from the running API."""
 
 import argparse
-import logging
 
 import requests
 
-from app.services.query_parser import find_year
+from app.chatbot.parser import find_year
+from app.schemas.enrollment import EnrollmentRecord
 
-LOGGER = logging.getLogger(__name__)
+DEFAULT_API_URL = "http://127.0.0.1:8000"
 
 
-def ask_api(year: int, api_url: str = "http://127.0.0.1:8000/students/enrollment") -> dict[str, object]:
-    """Request enrollment data from the API."""
-
+def ask_api(year: int, api_url: str = DEFAULT_API_URL) -> dict[str, int] | dict[str, str]:
+    """Query an API base URL and turn HTTP or response errors into terminal messages."""
     try:
-        response = requests.get(api_url, params={"year": year}, timeout=10)
+        response = requests.get(f"{api_url.rstrip('/')}/enrollments/{year}", timeout=10)
         if response.status_code == 404:
-            return {"error": response.json().get("detail", "No data found")}
+            return {"error": "No data for this year"}
         response.raise_for_status()
-        return response.json()
+    except requests.exceptions.Timeout:
+        return {"error": "The API request timed out"}
+    except requests.exceptions.HTTPError:
+        return {"error": "The API returned an HTTP error"}
     except requests.exceptions.RequestException:
         return {"error": "Could not connect to the API"}
 
+    try:
+        record = EnrollmentRecord.model_validate(response.json())
+        if record.year != year:
+            return {"error": "The API returned a different year"}
+        return record.model_dump()
+    except ValueError:
+        return {"error": "The API returned invalid enrollment data"}
 
-def run_chatbot(api_url: str) -> None:
-    """Run one terminal chatbot interaction."""
 
-    question = input("Ask me: ")
-    year = find_year(question)
-
-    if year is None:
-        LOGGER.info("Please include a year.")
+def run_chatbot(api_url: str = DEFAULT_API_URL) -> None:
+    """Read one question and print either an enrollment count or a useful error."""
+    try:
+        question = input("Ask me: ")
+    except (EOFError, KeyboardInterrupt):
+        print("Goodbye.")
+        return
+    try:
+        year = find_year(question)
+    except ValueError as exc:
+        print(str(exc))
         return
 
     result = ask_api(year, api_url=api_url)
-
     if "error" in result:
-        LOGGER.info("%s", result["error"])
-        return
-
-    LOGGER.info("%s students enrolled in %s.", result["students"], result["year"])
+        print(result["error"])
+    else:
+        print(f"{result['students']} students enrolled in {result['year']}.")
 
 
 def main() -> None:
-    """CLI entry point for the chatbot example."""
-
+    """Run a single interaction using the optional API base URL."""
     parser = argparse.ArgumentParser(description="Terminal chatbot for enrollment API")
-    parser.add_argument("--api-url", default="http://127.0.0.1:8000/students/enrollment")
+    parser.add_argument("--api-url", default=DEFAULT_API_URL, help="API base URL")
     args = parser.parse_args()
-    logging.basicConfig(level=logging.INFO, format="%(message)s")
     run_chatbot(args.api_url)
 
 

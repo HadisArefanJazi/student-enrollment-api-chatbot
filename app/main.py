@@ -1,18 +1,17 @@
-"""FastAPI application factory and app instance."""
+"""FastAPI application factory and ASGI entry point."""
 
-from __future__ import annotations
+from pathlib import Path
 
 from fastapi import FastAPI
 
 from app.api.routes import router
-from app.services.enrollment_service import EnrollmentService
+from app.repositories.enrollment import DEFAULT_DATA_PATH, EnrollmentRepository
 
 
-def create_app() -> FastAPI:
-    """Create and configure the Student Enrollment Data API."""
-
+def create_app(data_path: str | Path = DEFAULT_DATA_PATH) -> FastAPI:
+    """Validate the data before serving requests; fail early on invalid files."""
     app = FastAPI(title="Student Enrollment Data API")
-    app.state.enrollment_service = EnrollmentService()
+    app.state.enrollment_repository = EnrollmentRepository(data_path)
     app.include_router(router)
     return app
 

@@ -1,39 +1,22 @@
-"""Enrollment API request and response models."""
+"""Validated enrollment and health responses."""
 
-from __future__ import annotations
+from typing import Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
+
+Year = Annotated[int, Field(ge=1900, le=3000)]
 
 
 class EnrollmentRecord(BaseModel):
-    """Request body for creating an enrollment record."""
+    """An annual enrollment count, not an individual student."""
 
-    year: int = Field(..., ge=1900, le=3000)
-    students: int = Field(..., ge=0)
+    model_config = ConfigDict(strict=True, frozen=True, extra="forbid")
 
-
-class EnrollmentUpdate(BaseModel):
-    """Request body for updating an enrollment record."""
-
-    students: int = Field(..., ge=0)
-
-
-class EnrollmentResponse(BaseModel):
-    """Enrollment data returned by read endpoints."""
-
-    year: int
-    students: int
-
-
-class EnrollmentMutationResponse(BaseModel):
-    """Response returned after create, update, and delete operations."""
-
-    message: str
-    year: int
-    students: int
+    year: Year
+    students: int = Field(ge=0)
 
 
 class HealthResponse(BaseModel):
-    """Root endpoint response."""
+    """Health endpoint response."""
 
     message: str
