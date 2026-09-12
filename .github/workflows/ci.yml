@@ -40,6 +40,6 @@ jobs:
         run: |
           docker run -d --name enrollment-api -p 8000:8000 enrollment-api
           trap 'docker logs enrollment-api; docker rm -f enrollment-api' EXIT
-          curl --retry 20 --retry-delay 1 --retry-connrefused --fail http://127.0.0.1:8000/health
+          curl --retry 20 --retry-delay 1 --retry-all-errors --max-time 3 --retry-max-time 30 --fail http://127.0.0.1:8000/health
           curl --fail http://127.0.0.1:8000/enrollments/2025 | python -c 'import json, sys; assert json.load(sys.stdin) == {"year": 2025, "students": 1650}'
           test "$(docker exec enrollment-api id -u)" != "0"
