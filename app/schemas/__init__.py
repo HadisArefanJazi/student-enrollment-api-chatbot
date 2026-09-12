@@ -1,1 +1,1 @@
-"""Pydantic schemas for enrollment API requests and responses."""
+"""Pydantic response models and shared enrollment constraints."""
