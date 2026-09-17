@@ -43,7 +43,6 @@ and uses the API result to answer: "885 Computer Science students were enrolled 
 
 ## What LangChain Does
 
-LangChain does not replace the language model, FastAPI, or the data source.
 
 Each component has a separate responsibility:
 
@@ -110,11 +109,11 @@ Set an OpenAI API key:
 export OPENAI_API_KEY="your-api-key"
 ```
 
-Never commit a real API key to GitHub.
+**Never commit a real API key to GitHub :)**
 
 ## Run the API
 
-Start FastAPI:
+Start FastAPI (server side!):
 
 ```bash
 uvicorn app.main:app --reload
@@ -202,7 +201,7 @@ The tests check the API and LangChain tool without making real OpenAI API calls.
 
 The main concept demonstrated by this project is **LLM tool calling**.
 
-The language model does not directly access the JSON file.
+The LM does not directly access the JSON file.
 
 Instead:
 
@@ -223,5 +222,3 @@ Tool result returns to the agent
  ↓
 OpenAI LLM produces the answer
 ```
-
-This separation allows an AI model to interact with normal application code and APIs in a controlled way.
