@@ -1,0 +1,36 @@
+[
+  {"year": 2022, "department": "Computer Science", "students": 690},
+  {"year": 2022, "department": "Electrical Engineering", "students": 510},
+  {"year": 2022, "department": "Mechanical Engineering", "students": 460},
+  {"year": 2022, "department": "Civil Engineering", "students": 390},
+  {"year": 2022, "department": "Data Science", "students": 280},
+  {"year": 2022, "department": "Mathematics", "students": 310},
+
+  {"year": 2023, "department": "Computer Science", "students": 740},
+  {"year": 2023, "department": "Electrical Engineering", "students": 525},
+  {"year": 2023, "department": "Mechanical Engineering", "students": 475},
+  {"year": 2023, "department": "Civil Engineering", "students": 400},
+  {"year": 2023, "department": "Data Science", "students": 340},
+  {"year": 2023, "department": "Mathematics", "students": 320},
+
+  {"year": 2024, "department": "Computer Science", "students": 800},
+  {"year": 2024, "department": "Electrical Engineering", "students": 550},
+  {"year": 2024, "department": "Mechanical Engineering", "students": 490},
+  {"year": 2024, "department": "Civil Engineering", "students": 415},
+  {"year": 2024, "department": "Data Science", "students": 410},
+  {"year": 2024, "department": "Mathematics", "students": 335},
+
+  {"year": 2025, "department": "Computer Science", "students": 885},
+  {"year": 2025, "department": "Electrical Engineering", "students": 585},
+  {"year": 2025, "department": "Mechanical Engineering", "students": 515},
+  {"year": 2025, "department": "Civil Engineering", "students": 430},
+  {"year": 2025, "department": "Data Science", "students": 475},
+  {"year": 2025, "department": "Mathematics", "students": 350},
+
+  {"year": 2026, "department": "Computer Science", "students": 920},
+  {"year": 2026, "department": "Electrical Engineering", "students": 610},
+  {"year": 2026, "department": "Mechanical Engineering", "students": 540},
+  {"year": 2026, "department": "Civil Engineering", "students": 445},
+  {"year": 2026, "department": "Data Science", "students": 530},
+  {"year": 2026, "department": "Mathematics", "students": 365}
+]
