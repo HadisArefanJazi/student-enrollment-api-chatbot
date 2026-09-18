@@ -43,7 +43,7 @@ and uses the API result to answer: "885 Computer Science students were enrolled 
 
 ## What LangChain Does
 
-
+```text
 agent.invoke(question)
 ↓
 LangChain sends to LLM:
@@ -65,7 +65,9 @@ tool returns data to LangChain
 LangChain sends tool result back to LLM
 ↓
 LLM generates final answer
- 
+
+```
+
 
 Without LangChain, the program would need custom code such as manually extracting a year or department from the user's question.
 
