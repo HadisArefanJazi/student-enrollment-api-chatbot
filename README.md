@@ -44,24 +44,28 @@ and uses the API result to answer: "885 Computer Science students were enrolled 
 ## What LangChain Does
 
 
-Each component has a separate responsibility:
-
-```text
-OpenAI LLM
-    Understands the user's natural-language question.
-
-LangChain
-    Connects the LLM to Python tools and manages tool calling.
-
-Python tool
-    Gives the LLM a controlled way to access the application.
-
-FastAPI
-    Provides the enrollment data through a REST API.
-
-JSON
-    Stores the example enrollment records.
-```
+agent.invoke(question)
+↓
+LangChain sends to LLM:
+- system prompt
+- user question
+- available tool: get_enrollment
+↓
+LLM generates a tool call
+↓
+LangChain executes get_enrollment(...)
+↓
+inside that tool:
+requests.get(...) calls FastAPI
+↓
+FastAPI returns data
+↓
+tool returns data to LangChain
+↓
+LangChain sends tool result back to LLM
+↓
+LLM generates final answer
+ 
 
 Without LangChain, the program would need custom code such as manually extracting a year or department from the user's question.
 
